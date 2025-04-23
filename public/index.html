@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Meter</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .error-message {
+            color: #ef4444;
+            padding: 0.5rem;
+            background: #fee2e2;
+            border-radius: 0.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .text-gray-400 {
+            color: #9ca3af;
+        }
+
+        #trailerContainer {
+            margin-top: 1.5rem;
+        }
+        
+        /* Movie selection list styling */
+        .movie-selection-list {
+            background: #1f2937;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            overflow: hidden;
+        }
+        
+        .movie-selection-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #374151;
+        }
+        
+        .movie-selection-item:hover {
+            background: #374151;
+        }
+        
+        .movie-selection-item:last-child {
+            border-bottom: none;
+        }
+        
+        .movie-title {
+            font-weight: 600;
+        }
+        
+        .movie-year {
+            color: #9ca3af;
+            font-size: 0.875rem;
+        }
+        
+        .movie-selection-item img {
+            width: 2.5rem;
+            height: 3.5rem;
+            border-radius: 0.25rem;
+            margin-right: 1rem;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-2xl mx-auto mb-8">
+            <h1 class="text-4xl font-bold text-center mb-4">Movie Rating Finder</h1>
+            <div class="flex gap-2">
+                <input type="text" id="searchInput" 
+                    class="flex-1 rounded-lg px-4 py-2 text-gray-900"
+                    placeholder="Enter movie name...">
+                <button onclick="searchMovie()" 
+                    class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg">
+                    Search
+                </button>
+            </div>
+            
+            <!-- Movie Selection List - Initially Hidden -->
+            <div id="movieSelectionContainer" class="hidden mt-4">
+                <h2 class="text-xl font-semibold mb-2">Multiple matches found. Please select a movie:</h2>
+                <div id="movieSelectionList" class="movie-selection-list"></div>
+            </div>
+        </div>
+
+        <!-- Movie Details Section - Three columns layout -->
+        <div id="movieInfo" class="hidden grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            <!-- Left Column: Movie Poster -->
+            <div class="md:col-span-1">
+                <img id="moviePoster" 
+                     class="rounded-lg shadow-lg w-full" 
+                     src="" 
+                     alt="Movie poster"
+                     onerror="this.src='https://placehold.co/300x450?text=No+Poster'; this.alt='No poster available'">
+            </div>
+            
+            <!-- Middle Column: Trailer -->
+            <div class="md:col-span-1">
+                <div id="trailerContainer" class="aspect-video"></div>
+            </div>
+            
+            <!-- Right Column: Movie Info & Plot -->
+            <div class="md:col-span-1">
+                <h2 id="movieTitle" class="text-3xl font-bold mb-2"></h2>
+                <p id="movieYear" class="text-gray-400 mb-4"></p>
+                <p id="moviePlot" class="text-gray-300"></p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- IMDB Rating -->
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h3 class="text-xl font-bold mb-4 flex items-center">
+                    <img src="https://www.imdb.com/favicon.ico" class="w-6 h-6" alt="IMDb"> 
+                    <span class="ml-2">IMDb</span>
+                </h3>
+                <p id="imdbRating" class="text-4xl font-bold text-yellow-400">-</p>
+            </div>
+
+            <!-- Rotten Tomatoes Rating -->
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h3 class="text-xl font-bold mb-4 flex items-center">
+                    <img src="https://www.rottentomatoes.com/assets/pizza-pie/images/favicon.ico" class="w-6 h-6" alt="Rotten Tomatoes"> 
+                    <span class="ml-2">RT</span>
+                </h3>
+                <p id="rtRating" class="text-4xl font-bold text-red-500">-</p>
+            </div>
+
+            <!-- Letterboxd Rating -->
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h3 class="text-xl font-bold mb-4 flex items-center">
+                    <img src="https://letterboxd.com/favicon.ico" class="w-6 h-6" alt="Letterboxd"> 
+                    <span class="ml-2">Letterboxd</span>
+                </h3>
+                <p id="lbRating" class="text-4xl font-bold text-green-400">-</p>
+            </div>
+            
+            <!-- TMDB Rating -->
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h3 class="text-xl font-bold mb-4 flex items-center">
+                    <img src="https://www.themoviedb.org/assets/2/favicon-16x16-b362d267873ce9c5a39f686a11fe67fec2a72ed25fa8396c11b71aa43c938b11.png" class="w-6 h-6" alt="TMDB"> 
+                    <span class="ml-2">TMDB</span>
+                </h3>
+                <p id="tmdbRating" class="text-4xl font-bold text-blue-400">-</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading" class="hidden fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="text-white text-2xl">Loading...</div>
+    </div>
+
+    <script>
+        // Execute when DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add event listener for Enter key
+            document.getElementById('searchInput').addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    searchMovie();
+                }
+            });
+        });
+
+        async function searchMovie() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) {
+                alert('Please enter a movie name');
+                return;
+            }
+
+            // Hide movie selection list if it's visible
+            document.getElementById('movieSelectionContainer').classList.add('hidden');
+            
+            // Reset UI
+            resetUI();
+            showLoading(true);
+
+            try {
+                console.log('Making request to /api/search with query:', query);
+                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                
+                // Check if response is OK
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to fetch movie data');
+                }
+                
+                const data = await response.json();
+                
+                // Handle the response based on multipleResults flag
+                if (data.multipleResults && data.movies && data.movies.length > 1) {
+                    displayMovieSelectionList(data.movies);
+                } else if (data.movies && data.movies.length === 1) {
+                    await fetchMovieDetails(data.movies[0].id);
+                } else {
+                    throw new Error('No movies found matching your search');
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                alert(error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        function displayMovieSelectionList(movies) {
+            const container = document.getElementById('movieSelectionContainer');
+            const list = document.getElementById('movieSelectionList');
+            
+            // Clear previous list
+            list.innerHTML = '';
+            
+            // Add each movie to the list
+            movies.forEach(movie => {
+                const item = document.createElement('div');
+                item.className = 'movie-selection-item';
+                item.innerHTML = `
+                    <div class="flex items-center">
+                        <img src="${movie.poster || 'https://placehold.co/60x90?text=No+Poster'}" 
+                             alt="${movie.title}" 
+                             onerror="this.src='https://placehold.co/60x90?text=No+Poster';">
+                        <div>
+                            <div class="movie-title">${movie.title}</div>
+                            <div class="movie-year">${movie.year || 'Unknown year'}</div>
+                        </div>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                `;
+                
+                // Add click event to fetch the selected movie
+                item.addEventListener('click', () => {
+                    fetchMovieDetails(movie.id);
+                });
+                
+                list.appendChild(item);
+            });
+            
+            // Show the selection container
+            container.classList.remove('hidden');
+        }
+        
+        async function fetchMovieDetails(movieId) {
+            showLoading(true);
+            document.getElementById('movieSelectionContainer').classList.add('hidden');
+            
+            try {
+                console.log(`Fetching details for movie ID: ${movieId}`);
+                const response = await fetch(`/api/movie/${movieId}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Show the movie details
+                    updateMovieUI(data);
+                } else {
+                    throw new Error(data.error || 'Failed to fetch movie details');
+                }
+            } catch (error) {
+                console.error('Error fetching movie details:', error);
+                
+                // Create and show an error message to the user
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message max-w-2xl mx-auto';
+                errorDiv.textContent = `Error: ${error.message}`;
+                
+                // Insert after the search box
+                const searchContainer = document.querySelector('.max-w-2xl');
+                searchContainer.appendChild(errorDiv);
+                
+                // Hide after 5 seconds
+                setTimeout(() => {
+                    errorDiv.remove();
+                }, 5000);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function resetUI() {
+            document.getElementById('movieInfo').classList.add('hidden');
+            
+            // Reset all ratings to default
+            document.getElementById('imdbRating').textContent = '-';
+            document.getElementById('rtRating').textContent = '-';
+            document.getElementById('lbRating').textContent = '-';
+            document.getElementById('tmdbRating').textContent = '-';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('hidden', !show);
+            document.getElementById('searchInput').disabled = show;
+            document.querySelector('button').disabled = show;
+        }
+
+        function updateMovieUI(movieData) {
+            // Clear any previous errors
+            document.querySelectorAll('.error-message').forEach(el => el.remove());
+
+            // Basic info
+            document.getElementById('movieTitle').textContent = movieData.title || 'N/A';
+            document.getElementById('movieYear').textContent = movieData.year ? `(${movieData.year})` : '';
+            document.getElementById('moviePlot').textContent = movieData.plot || 'Plot not available';
+
+            // Poster
+            const poster = document.getElementById('moviePoster');
+            poster.src = movieData.poster || 'https://placehold.co/300x450?text=No+Poster';
+            poster.alt = `${movieData.title} poster`;
+            poster.onerror = () => { poster.src = 'https://placehold.co/300x450?text=No+Poster'; };
+
+            // Ratings - with fallbacks
+            updateRating('imdb', movieData.ratings?.imdb);
+            updateRating('rt', movieData.ratings?.rottenTomatoes);
+            updateRating('lb', movieData.ratings?.letterboxd);
+            updateRating('tmdb', movieData.ratings?.tmdb);
+
+            // Trailer
+            const trailerContainer = document.getElementById('trailerContainer');
+            if (movieData.trailer) {
+                trailerContainer.innerHTML = `
+                    <h3 class="text-xl font-bold mb-2">Trailer</h3>
+                    <iframe class="w-full rounded-lg" height="315" src="${movieData.trailer}" 
+                        frameborder="0" allowfullscreen></iframe>
+                `;
+            } else {
+                trailerContainer.innerHTML = '<p class="text-gray-400">Trailer not available</p>';
+            }
+            
+            // Show the movie info section
+            document.getElementById('movieInfo').classList.remove('hidden');
+        }
+
+        function updateRating(prefix, value) {
+            const element = document.getElementById(`${prefix}Rating`);
+            
+            // Update the rating
+            element.textContent = value || 'N/A';
+            
+            // Gray out the text if no value
+            if (!value || value === 'N/A') {
+                element.classList.add('text-gray-400');
+            } else {
+                element.classList.remove('text-gray-400');
+            }
+        }
+    </script>
+</body>
+</html>
