@@ -180,7 +180,11 @@
 
             try {
                 console.log('Making request to /api/search with query:', query);
-                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
                 
                 // Check if response is OK
                 if (!response.ok) {
@@ -250,7 +254,11 @@
             
             try {
                 console.log(`Fetching details for movie ID: ${movieId}`);
-                const response = await fetch(`/api/movie/${movieId}`);
+                const response = await fetch(`/api/movie/${movieId}`, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
                 const data = await response.json();
                 
                 if (response.ok) {
