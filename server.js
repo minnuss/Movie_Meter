@@ -7,7 +7,8 @@ const app = express();
 const NodeCache = require('node-cache');
 const cache = new NodeCache({ stdTTL: 3600 });
 
-app.use(express.static('public'));
+const path = require('path');
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Rate limiting
 const rateLimit = require('express-rate-limit');
@@ -482,6 +483,11 @@ app.get('/api/search', async (req, res) => {
             details: error.message 
         });
     }
+});
+
+// Add a catch-all route for the frontend
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
